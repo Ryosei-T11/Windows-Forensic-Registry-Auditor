@@ -1,0 +1,21 @@
+{
+  "RuleId": "RUL-REG-001",
+  "RuleName": "Suspicious Startup Registry Registration",
+  "Description": "Mendeteksi proses tidak dipercaya yang mencoba mendaftarkan persistensi startup.",
+  "Severity": "High",
+  "TargetRegistryKeys": [
+    "\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+    "\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+    "\\Registry\\User\\*\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+  ],
+  "BehavioralTriggers": {
+    "AllowSignedBinaries": true,
+    "BlockUnsignedBinaries": true,
+    "SuspiciousPaths": [ "AppData\\Local\\Temp", "Users\\Public", "Windows\\Temp" ],
+    "EntropyThreshold": 6.8
+  },
+  "AutomaticMitigation": {
+    "KillProcess": true,
+    "RollbackRegistry": true
+  }
+}

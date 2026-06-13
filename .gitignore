@@ -1,0 +1,22 @@
+## Target folder kompilasi hasil build
+[Db]bin/
+[Db]obj/
+[Rr]elease/
+[Dd]ebug/
+
+## Folder konfigurasi personal Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Berkas log audit lokal (Keamanan: jangan diunggah ke publik)
+*.log
+tamper_audit.log
+
+## Folder dependencies otomatis dan paket NuGet
+packages/
+*.nuget.props
+*.nuget.targets
+project.assets.json

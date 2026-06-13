@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Rules/">
+    <File Path="ransomware_file_heuristics.json" />
+    <File Path="service_tampering.json" />
+    <File Path="startup_persistence.json" />
+    <File Path="uac_bypass_attempts.json" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="ForensicAuditor.Core/ForensicAuditor.Core.csproj" />
+  <Project Path="ForensicAuditor.Engine/ForensicAuditor.Engine.csproj" />
+  <Project Path="ForensicAuditor.Infrastructure/ForensicAuditor.Infrastructure.csproj" />
+  <Project Path="ForensicAuditor.UI.Dashboard/ForensicAuditor.UI.Dashboard.csproj" />
+</Solution>

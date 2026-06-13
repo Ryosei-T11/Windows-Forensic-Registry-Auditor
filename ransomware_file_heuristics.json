@@ -1,0 +1,19 @@
+{
+  "RuleId": "RUL-FIL-001",
+  "RuleName": "Mass File Renaming & Encryption",
+  "Description": "Mendeteksi modifikasi cepat pada file di folder dokumen pengguna yang mengarah ke aktivitas Ransomware.",
+  "Severity": "Critical",
+  "TargetPaths": [
+    "C:\\Users\\*\\Documents",
+    "C:\\Users\\*\\Desktop"
+  ],
+  "BehavioralTriggers": {
+    "MaxEventsPerSecond": 10,
+    "BlacklistedExtensions": [ ".locked", ".crypto", ".wannacry", ".payme" ],
+    "EntropyCheck": true
+  },
+  "AutomaticMitigation": {
+    "KillProcess": true,
+    "IsolateNetwork": false
+  }
+}

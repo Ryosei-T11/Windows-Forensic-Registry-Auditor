@@ -1,0 +1,15 @@
+<UserControl x:Class="ForensicAuditor.UI.Dashboard.Views.RealTimeLogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinHeight="200">
+    <Grid Background="#1E1E1E">
+        <DataGrid ItemsSource="{Binding Alerts}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" Foreground="White" BorderBrush="Transparent">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat=HH:mm:ss}" Width="100"/>
+                <DataGridTextColumn Header="Rule Trigger" Binding="{Binding DetectionRule}" Width="180"/>
+                <DataGridTextColumn Header="Registry Path" Binding="{Binding SubKeyPath}" Width="*"/>
+                <DataGridTextColumn Header="Score" Binding="{Binding RiskScore}" Width="60"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

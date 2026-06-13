@@ -1,0 +1,17 @@
+<UserControl x:Class="ForensicAuditor.UI.Dashboard.Views.RegistryTreeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MinHeight="180">
+    <Grid Background="Transparent">
+        <TreeView ItemsSource="{Binding RootNodes}" Background="Transparent" BorderBrush="Transparent">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                        <TextBlock Text="📁 " Foreground="#F1C40F" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</UserControl>

@@ -1,0 +1,17 @@
+{
+  "RuleId": "RUL-REG-002",
+  "RuleName": "Windows Service Tampering",
+  "Description": "Mendeteksi instalasi service baru atau manipulasi startup type service bawaan OS oleh proses non-SYSTEM.",
+  "Severity": "Critical",
+  "TargetRegistryKeys": [
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Services\\*"
+  ],
+  "BehavioralTriggers": {
+    "ProtectedServices": [ "WinDefend", "MpsSvc", "Wuauserv" ],
+    "BlockRegistryType": "REG_DWORD"
+  },
+  "AutomaticMitigation": {
+    "KillProcess": true,
+    "RollbackRegistry": true
+  }
+}

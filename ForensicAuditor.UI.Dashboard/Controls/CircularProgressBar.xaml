@@ -1,16 +1,54 @@
 <UserControl x:Class="ForensicAuditor.UI.Dashboard.Controls.CircularProgressBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Height="150" Width="150">
+             Height="150" Width="150"
+             x:Name="parentControl">
     <Grid>
-        <Ellipse Stroke="#E0E0E0" StrokeThickness="10"/>
-        <Ellipse Stroke="#E74C3C" StrokeThickness="10" 
-                 StrokeDashArray="10 100" RenderTransformOrigin="0.5,0.5">
+        <!-- Lingkaran Latar Belakang (Abu-abu) -->
+        <Ellipse Stroke="#252525" StrokeThickness="10" Width="130" Height="130"/>
+
+        <!-- Lingkaran Progress Dinamis (Warna & Panjang ditentukan oleh Code-Behind) -->
+        <Ellipse x:Name="ProgressIndicator" 
+                 Stroke="#2ECC71" 
+                 StrokeThickness="10" 
+                 Width="130" 
+                 Height="130"
+                 RenderTransformOrigin="0.5,0.5">
             <Ellipse.RenderTransform>
                 <RotateTransform Angle="-90"/>
             </Ellipse.RenderTransform>
         </Ellipse>
-        <TextBlock Text="Secured" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                   FontSize="16" FontWeight="Bold" Foreground="#2ECC71"/>
+
+        <!-- Teks Dinamis di Tengah Lingkaran -->
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" 
+                   FontSize="16" FontWeight="Bold">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <!-- Status Default (Aman) -->
+                    <Setter Property="Text" Value="Secured"/>
+                    <Setter Property="Foreground" Value="#2ECC71"/>
+
+                    <Style.Triggers>
+                        <!-- Pemicu ketika status berubah menjadi Suspicious -->
+                        <DataTrigger Binding="{Binding CurrentState}" Value="Suspicious">
+                            <Setter Property="Text" Value="Suspicious"/>
+                            <Setter Property="Foreground" Value="#E67E22"/>
+                        </DataTrigger>
+
+                        <!-- Pemicu ketika status berubah menjadi UnderAttack -->
+                        <DataTrigger Binding="{Binding CurrentState}" Value="UnderAttack">
+                            <Setter Property="Text" Value="Threat!"/>
+                            <Setter Property="Foreground" Value="#E74C3C"/>
+                        </DataTrigger>
+
+                        <!-- Pemicu ketika status sedang dalam mitigasi otomatis -->
+                        <DataTrigger Binding="{Binding CurrentState}" Value="Mitigating">
+                            <Setter Property="Text" Value="Mitigating"/>
+                            <Setter Property="Foreground" Value="#3498DB"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
     </Grid>
 </UserControl>

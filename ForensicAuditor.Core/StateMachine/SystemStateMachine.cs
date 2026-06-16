@@ -3,10 +3,8 @@ using ForensicAuditor.Core.Models;
 
 namespace ForensicAuditor.Core.StateMachine
 {
-    /// <summary>
     /// Mengelola transisi status keamanan sistem secara thread-safe menggunakan State Machine.
     /// Catatan: Enum SystemState diimpor langsung dari SystemState.cs untuk menghindari duplikasi tipe.
-    /// </summary>
     public class SystemStateMachine
     {
         private readonly object _lock = new();
@@ -16,9 +14,7 @@ namespace ForensicAuditor.Core.StateMachine
         // Event yang dipicu ketika terjadi perubahan status sistem
         public event Action<SystemState, SystemState, string>? OnStateChanged;
 
-        /// <summary>
         /// Mengubah status sistem berdasarkan analisis heuristik real-time.
-        /// </summary>
         public void TransitionTo(SystemState newState, string reason)
         {
             lock (_lock)
@@ -50,9 +46,7 @@ namespace ForensicAuditor.Core.StateMachine
             };
         }
 
-        /// <summary>
         /// Evaluasi otomatis skor risiko untuk memperbarui state sistem.
-        /// </summary>
         public void EvaluateRiskScore(double aggregateRiskScore, string triggerRule)
         {
             if (aggregateRiskScore >= 8.0)

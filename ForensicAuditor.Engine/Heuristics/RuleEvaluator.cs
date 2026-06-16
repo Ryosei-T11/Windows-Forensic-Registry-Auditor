@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Diagnostics;
 using ForensicAuditor.Core.Models;
+using Serilog;
+using ForensicAuditor.Infrastructure.Tracing;
 
 namespace ForensicAuditor.Engine.Heuristics
 {
@@ -28,6 +31,17 @@ namespace ForensicAuditor.Engine.Heuristics
 
         public RegistryEvent EvaluateRegistry(RegistryEvent regEvent)
         {
+            using var act = ForensicAuditor.Infrastructure.Tracing.Tracing.StartActivity("RuleEvaluator.EvaluateRegistry");
+            if (act != null)
+            {
+                act.SetTag("event.id", regEvent.EventId);
+                act.SetTag("event.correlation", regEvent.CorrelationId);
+                act.SetTag("registry.hive", regEvent.Hive);
+                act.SetTag("registry.key", regEvent.SubKeyPath);
+            }
+
+            Log.Debug("Evaluating registry event {EventId} Correlation={Correlation} Key={Key}", regEvent.EventId, regEvent.CorrelationId, regEvent.SubKeyPath);
+
             foreach (var rule in _loadedRules)
             {
                 foreach (var targetKey in rule.TargetRegistryKeys)

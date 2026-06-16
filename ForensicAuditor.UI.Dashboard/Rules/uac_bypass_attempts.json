@@ -1,0 +1,17 @@
+{
+  "RuleId": "RUL-REG-003",
+  "RuleName": "UAC Bypass Hijacking",
+  "Description": "Mendeteksi modifikasi asosiasi shell open command pada classes root untuk memicu privilege escalation.",
+  "Severity": "Critical",
+  "TargetRegistryKeys": [
+    "\\Registry\\User\\*\\Software\\Classes\\mscfile\\shell\\open\\command",
+    "\\Registry\\User\\*\\Software\\Classes\\exefile\\shell\\open\\command"
+  ],
+  "BehavioralTriggers": {
+    "BlockUnsignedBinaries": true
+  },
+  "AutomaticMitigation": {
+    "KillProcess": true,
+    "RollbackRegistry": true
+  }
+}

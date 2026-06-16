@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 using ForensicAuditor.Core.Interfaces;
 using ForensicAuditor.Core.Models;
 using ForensicAuditor.Core.StateMachine;
@@ -32,12 +33,14 @@ namespace ForensicAuditor.Infrastructure.Win32
         public void StartMonitoring()
         {
             if (_cts != null) return;
+            Log.Information("RegNotifyWatcher starting for {Hive} {SubKey}", _hiveName, _subKeyPath);
             _cts = new CancellationTokenSource();
             Task.Run(() => MonitorLoop(_cts.Token));
         }
 
         public void StopMonitoring()
         {
+            Log.Information("RegNotifyWatcher stopping for {Hive} {SubKey}", _hiveName, _subKeyPath);
             _cts?.Cancel();
             _cts = null;
         }
@@ -45,7 +48,11 @@ namespace ForensicAuditor.Infrastructure.Win32
         private void MonitorLoop(CancellationToken token)
         {
             int result = NativeMethods.RegOpenKeyEx(_rootHive, _subKeyPath, 0, NativeMethods.KEY_READ, out IntPtr hKey);
-            if (result != 0) return;
+            if (result != 0)
+            {
+                Log.Error("RegOpenKeyEx failed for {Hive} {SubKey} with code {Result}", _hiveName, _subKeyPath, result);
+                return;
+            }
 
             using AutoResetEvent notifyEvent = new(false);
             IntPtr eventHandle = notifyEvent.SafeWaitHandle.DangerousGetHandle();
@@ -61,7 +68,11 @@ namespace ForensicAuditor.Infrastructure.Win32
                         hEvent: eventHandle,
                         fAsynchronous: true);
 
-                    if (result != 0) break;
+                    if (result != 0)
+                    {
+                        Log.Error("RegNotifyChangeKeyValue returned error {Result} for {Hive} {SubKey}", result, _hiveName, _subKeyPath);
+                        break;
+                    }
 
                     int waitResult = WaitHandle.WaitAny(new[] { notifyEvent, token.WaitHandle });
 
@@ -73,6 +84,7 @@ namespace ForensicAuditor.Infrastructure.Win32
                             SubKeyPath = _subKeyPath,
                             Timestamp = DateTime.Now
                         };
+                        Log.Information("Registry change detected: EventId={EventId} Correlation={Correlation} {Hive} {SubKey} at {Timestamp}", regEvent.EventId, regEvent.CorrelationId, _hiveName, _subKeyPath, regEvent.Timestamp);
                         OnRegistryChanged?.Invoke(regEvent);
                     }
                 }

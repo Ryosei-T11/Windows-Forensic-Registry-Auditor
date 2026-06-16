@@ -1,10 +1,4 @@
 <Solution>
-  <Folder Name="/Rules/">
-    <File Path="ransomware_file_heuristics.json" />
-    <File Path="service_tampering.json" />
-    <File Path="startup_persistence.json" />
-    <File Path="uac_bypass_attempts.json" />
-  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
   </Folder>

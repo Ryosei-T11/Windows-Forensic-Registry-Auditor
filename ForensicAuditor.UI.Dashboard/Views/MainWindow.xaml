@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ForensicAuditor.UI.Dashboard.Views"
         xmlns:controls="clr-namespace:ForensicAuditor.UI.Dashboard.Controls"
-        Title="Windows Forensic Anti-Tampering Audit Dashboard" Height="600" Width="900"
+        Title="Windows Forensic Anti-Tampering Audit Dashboard" Height="650" Width="950"
         Background="#121212">
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -17,13 +17,14 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                 <TextBlock Text="🔒 FORENSIC BLACK BOX AUDITOR" FontSize="20" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                 <Label Content="REAL-TIME PROTECTED" Background="#27AE60" Foreground="White" FontWeight="Bold" Margin="20,0,0,0" Padding="8,4" VerticalAlignment="Center"/>
+                <Label Content="{Binding CurrentState}" Background="#2980B9" Foreground="White" FontWeight="Bold" Margin="10,0,0,0" Padding="8,4" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 
         <!-- Main Workspace -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="260"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
@@ -32,13 +33,26 @@
                 <Border Background="#1F1F1F" Padding="10" CornerRadius="8" Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="System Risk Indicator" Foreground="Gray" FontSize="11" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                        <controls:CircularProgressBar HorizontalAlignment="Center"/>
+
+                        <!-- Binding nilai ke ThreatLevel di ViewModel -->
+                        <controls:CircularProgressBar Value="{Binding ThreatLevel}" HorizontalAlignment="Center"/>
+
                         <TextBlock Text="Audit Engine Active" Foreground="#2ECC71" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,15,0,0"/>
                     </StackPanel>
                 </Border>
 
+                <!-- Panel Simulasi Serangan untuk Demonstrasi -->
+                <Border Background="#1F1F1F" Padding="10" CornerRadius="8" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Simulator Serangan (Demo)" Foreground="Gray" FontSize="11" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                        <Button Content="Simulasi Aplikasi Aman" Click="SimulateSafe_Click" Margin="0,0,0,6" Background="#27AE60" Foreground="White" FontWeight="Bold" Padding="5" BorderBrush="Transparent"/>
+                        <Button Content="Simulasi Suspect (Run AppData)" Click="SimulateSuspect_Click" Margin="0,0,0,6" Background="#E67E22" Foreground="White" FontWeight="Bold" Padding="5" BorderBrush="Transparent"/>
+                        <Button Content="Simulasi Ransomware (Critical)" Click="SimulateAttack_Click" Background="#C0392B" Foreground="White" FontWeight="Bold" Padding="5" BorderBrush="Transparent"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Registry Tree Container -->
-                <Border Background="#1F1F1F" Padding="10" CornerRadius="8" Height="220">
+                <Border Background="#1F1F1F" Padding="10" CornerRadius="8" Height="140">
                     <views:RegistryTreeView/>
                 </Border>
             </StackPanel>

@@ -1,11 +1,13 @@
 ﻿using System;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
-using ForensicAuditor.Infrastructure.Win32;
 
 namespace ForensicAuditor.Infrastructure.Win32
 {
     public static class ProcessHelper
     {
+        /// Mengambil absolute executable path dari Process ID (PID) pelaku modifikasi Registry.
         public static string GetProcessExecutablePath(int processId)
         {
             if (processId <= 0) return "System/Unknown";
@@ -16,11 +18,10 @@ namespace ForensicAuditor.Infrastructure.Win32
             try
             {
                 uint size = 1024;
-                var buffer = new StringBuilder((int)size);
-                uint actualSize = size;
-                if (NativeMethods.QueryFullProcessImageName(hProcess, 0, buffer, ref actualSize))
+                StringBuilder buffer = new StringBuilder((int)size);
+                if (NativeMethods.QueryFullProcessImageName(hProcess, 0, buffer, ref size))
                 {
-                    return buffer.ToString(0, (int)actualSize);
+                    return buffer.ToString();
                 }
             }
             finally
@@ -29,6 +30,40 @@ namespace ForensicAuditor.Infrastructure.Win32
             }
 
             return "Unknown Image Path";
+        }
+
+        /// Menghitung nilai SHA-256 hash dari berkas executable pelaku secara aman.
+        /// Menggunakan FileShare.ReadWrite agar tidak error saat berkas sedang dijalankan/dikunci OS.
+        public static string CalculateSha256(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) ||
+                filePath == "Unknown" ||
+                filePath == "Access Denied" ||
+                filePath == "Unknown Image Path" ||
+                !File.Exists(filePath))
+            {
+                return "N/A";
+            }
+
+            try
+            {
+                // Gunakan FileShare.ReadWrite untuk menghindari locked-file exceptions
+                using FileStream stream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using SHA256 sha256 = SHA256.Create();
+
+                byte[] hashBytes = sha256.ComputeHash(stream);
+
+                StringBuilder sb = new();
+                foreach (byte b in hashBytes)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+                return sb.ToString().ToUpper();
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
         }
     }
 }

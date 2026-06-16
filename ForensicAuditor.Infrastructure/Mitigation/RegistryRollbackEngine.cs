@@ -29,7 +29,7 @@ namespace ForensicAuditor.Infrastructure.Mitigation
             }
             catch (Exception)
             {
-                return false; // Rollback gagal karena tidak memiliki hak Privilege tinggi (UAC)
+                return false; 
             }
         }
     }

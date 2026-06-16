@@ -1,15 +1,529 @@
 <UserControl x:Class="ForensicAuditor.UI.Dashboard.Views.RealTimeLogView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinHeight="200">
+             MinHeight="200"
+             DataContextChanged="UserControl_DataContextChanged">
     <Grid Background="#1E1E1E">
-        <DataGrid ItemsSource="{Binding Alerts}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" Foreground="White" BorderBrush="Transparent">
+        <Grid.RowDefinitions>
+            <!-- Baris 0: Panel Kontrol Pencarian & Penyaringan -->
+            <RowDefinition Height="Auto"/>
+            <!-- Baris 1: Tabel Log Aktif -->
+            <RowDefinition Height="*"/>
+            <!-- Baris 2: Pemisah Resizable (GridSplitter) -->
+            <RowDefinition Height="Auto"/>
+            <!-- Baris 3: Panel Detail Investigasi Forensik & Aksi -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- PANEL KONTROL (SEARCH, FILTER & EXPORT) -->
+        <Border Grid.Row="0" Background="#121212" Padding="12,10" CornerRadius="8,8,0,0" BorderBrush="#2D2D30" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Input Pencarian (Search Bar) -->
+                <Grid Grid.Column="0" Margin="0,0,12,0">
+                    <TextBox x:Name="SearchTextBox" 
+                             Background="#1E1E1E" 
+                             Foreground="White" 
+                             BorderBrush="#2D2D30" 
+                             Padding="32,8,10,8" 
+                             FontSize="12"
+                             BorderThickness="1"
+                             VerticalAlignment="Center"
+                             TextChanged="SearchTextBox_TextChanged">
+                        <TextBox.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="CornerRadius" Value="4"/>
+                            </Style>
+                        </TextBox.Resources>
+                    </TextBox>
+
+                    <!-- Watermark Teks Placeholder -->
+                    <TextBlock IsHitTestVisible="False" 
+                               Text="🔍 Cari berdasarkan Aturan, Proses, Hash, atau Path..." 
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Left" 
+                               Margin="10,0,0,0" 
+                               Foreground="#666666" 
+                               FontSize="11">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+
+                <!-- Filter Dropdown Tingkat Kerentanan -->
+                <ComboBox x:Name="SeverityComboBox" 
+                          Grid.Column="1" 
+                          Background="#1E1E1E" 
+                          Foreground="White" 
+                          BorderBrush="#2D2D30" 
+                          Padding="10,6" 
+                          VerticalAlignment="Center"
+                          SelectedIndex="0"
+                          SelectionChanged="SeverityComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Semua Tingkat Bahaya"/>
+                    <ComboBoxItem Content="Kritis (Skor 8.0 - 10.0)"/>
+                    <ComboBoxItem Content="Waspada (Skor 4.0 - 7.9)"/>
+                    <ComboBoxItem Content="Aman / Info (Skor &lt; 4.0)"/>
+                </ComboBox>
+
+                <!-- Tombol Reset Filter -->
+                <Button Grid.Column="2" 
+                        Content="Reset Filter" 
+                        Margin="12,0,0,0" 
+                        Padding="16,8" 
+                        Background="#2D2D30" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        FontSize="11"
+                        BorderBrush="Transparent"
+                        VerticalAlignment="Center"
+                        Cursor="Hand"
+                        Click="ResetButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#C0392B"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- TOMBOL EKSPOR LAPORAN FORENSIK -->
+                <Button Grid.Column="3" 
+                        Content="📤 Ekspor Laporan" 
+                        Margin="12,0,0,0" 
+                        Padding="16,8" 
+                        Background="#27AE60" 
+                        Foreground="White" 
+                        FontWeight="Bold"
+                        FontSize="11"
+                        BorderBrush="Transparent"
+                        VerticalAlignment="Center"
+                        Cursor="Hand"
+                        Click="ExportButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#2ECC71"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- TABEL LOG UTAMA (DATAGRID) -->
+        <DataGrid x:Name="LogDataGrid"
+                  Grid.Row="1"
+                  ItemsSource="{Binding Alerts}" 
+                  AutoGenerateColumns="False" 
+                  IsReadOnly="True" 
+                  Background="#1E1E1E" 
+                  RowBackground="#1E1E1E"
+                  AlternatingRowBackground="#1A1A1A"
+                  Foreground="White" 
+                  BorderBrush="Transparent"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="#2D2D30"
+                  HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserReorderColumns="False"
+                  CanUserResizeRows="False">
+
+            <DataGrid.Resources>
+                <!-- Gaya Visual untuk Kepala Kolom (Header) -->
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#121212"/>
+                    <Setter Property="Foreground" Value="#AAAAAA"/>
+                    <Setter Property="BorderBrush" Value="#2D2D30"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                    <Setter Property="Padding" Value="10,12"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                </Style>
+
+                <!-- Gaya Visual untuk Baris (Row) -->
+                <Style TargetType="DataGridRow">
+                    <Setter Property="BorderBrush" Value="#2D2D30"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#252526"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#333337"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+
+                <!-- Gaya Visual untuk Sel (Cell) -->
+                <Style TargetType="DataGridCell">
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                <Border Padding="{TemplateBinding Padding}" 
+                                        Background="{TemplateBinding Background}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Resources>
+
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat=HH:mm:ss}" Width="100"/>
-                <DataGridTextColumn Header="Rule Trigger" Binding="{Binding DetectionRule}" Width="180"/>
-                <DataGridTextColumn Header="Registry Path" Binding="{Binding SubKeyPath}" Width="*"/>
-                <DataGridTextColumn Header="Score" Binding="{Binding RiskScore}" Width="60"/>
+                <!-- Kolom Timestamp -->
+                <DataGridTextColumn Header="Timestamp" 
+                                    Binding="{Binding Timestamp, StringFormat=HH:mm:ss}" 
+                                    Width="90">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#888888"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom Rule Trigger -->
+                <DataGridTextColumn Header="Rule Trigger" 
+                                    Binding="{Binding DetectionRule}" 
+                                    Width="180">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom Process Name -->
+                <DataGridTextColumn Header="Process Name" 
+                                    Binding="{Binding ProcessName}" 
+                                    Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#DCDCDC"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom SHA-256 Hash -->
+                <DataGridTextColumn Header="SHA-256 Hash" 
+                                    Binding="{Binding Sha256Hash}" 
+                                    Width="130">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#777777"/>
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom Cloud Reputation dengan Deteksi Warna Otomatis -->
+                <DataGridTextColumn Header="Cloud Reputation" 
+                                    Binding="{Binding ReputationResult}" 
+                                    Width="200">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ReputationResult}" Value="MALICIOUS (54 Antivirus Detects - Trojan.Ransom)">
+                                    <Setter Property="Foreground" Value="#E74C3C"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ReputationResult}" Value="SUSPICIOUS (4 Warnings - Unsigned Updater)">
+                                    <Setter Property="Foreground" Value="#E67E22"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ReputationResult}" Value="Harmless (Passed 62 Antivirus Engines)">
+                                    <Setter Property="Foreground" Value="#2ECC71"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom Registry Path -->
+                <DataGridTextColumn Header="Registry Path" 
+                                    Binding="{Binding SubKeyPath}" 
+                                    Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Foreground" Value="#CCCCCC"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Kolom Score dengan Highlight Warna Dinamis -->
+                <DataGridTextColumn Header="Score" 
+                                    Binding="{Binding RiskScore}" 
+                                    Width="60">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding RiskScore}" Value="10">
+                                    <Setter Property="Foreground" Value="#E74C3C"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding RiskScore}" Value="7.5">
+                                    <Setter Property="Foreground" Value="#E67E22"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding RiskScore}" Value="3.5">
+                                    <Setter Property="Foreground" Value="#F1C40F"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding RiskScore}" Value="0">
+                                    <Setter Property="Foreground" Value="#2ECC71"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
+
+        <!-- BARIS 2: PEMISAH GRID SPLITTER -->
+        <GridSplitter Grid.Row="2" 
+                      Height="5" 
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Center" 
+                      Background="#2D2D30" />
+
+        <!-- BARIS 3: PANEL DETAIL INVESTIGASI FORENSIK (DataContext terikat ke baris DataGrid terpilih) -->
+        <Grid x:Name="DetailPanel" 
+              Grid.Row="3" 
+              Background="#121212" 
+              Height="230"
+              DataContext="{Binding SelectedItem, ElementName=LogDataGrid}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <!-- Panel disembunyikan otomatis jika tidak ada log terpilih -->
+                        <Trigger Property="DataContext" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="2.2*"/>
+                <ColumnDefinition Width="1.6*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Kolom 0: Analisis Informasi Proses -->
+            <Border Grid.Column="0" BorderBrush="#2D2D30" BorderThickness="0,0,1,0" Padding="15,10">
+                <StackPanel>
+                    <TextBlock Text="🖥️ DETAILS PROSES PELAKU" Foreground="#888888" FontWeight="Bold" FontSize="11" Margin="0,0,0,10"/>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Nama Proses:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding ProcessName}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Process ID (PID):" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding ProcessId}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Lokasi Berkas:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding ProcessPath}" ToolTip="{Binding ProcessPath}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="SHA-256 Hash:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Sha256Hash}" FontFamily="Consolas" FontSize="11" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Kolom 1: Detail Modifikasi Registry Target -->
+            <Border Grid.Column="1" BorderBrush="#2D2D30" BorderThickness="0,0,1,0" Padding="15,10">
+                <StackPanel>
+                    <TextBlock Text="🔑 ATRIBUT MODIFIKASI REGISTRY" Foreground="#888888" FontWeight="Bold" FontSize="11" Margin="0,0,0,10"/>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Hive Registri:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Hive}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="SubKey Path:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding SubKeyPath}" ToolTip="{Binding SubKeyPath}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Nama Value:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding ValueName}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Nilai Baru:" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding NewValue}" ToolTip="{Binding NewValue}" IsReadOnly="True" Background="#1E1E1E" Foreground="White" BorderBrush="#2D2D30" Padding="5,3"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Kolom 2: Status Bahaya & Kontrol Respon Manual -->
+            <Border Grid.Column="2" Padding="15,10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="🛡️ RESPONS &amp; MANUAL MITIGASI" Foreground="#888888" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
+
+                    <!-- Skor Ringkas -->
+                    <UniformGrid Grid.Row="1" Columns="2" Margin="0,0,0,10">
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock Text="Risk Score" Foreground="#666666" FontSize="10" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding RiskScore}" Foreground="#E74C3C" FontSize="16" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Margin="5,0,0,0">
+                            <TextBlock Text="Reputasi" Foreground="#666666" FontSize="10" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Severity}" Foreground="#E67E22" FontSize="13" FontWeight="Bold"/>
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <!-- Kumpulan Tombol Aksi Mitigasi -->
+                    <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                        <!-- Aksi 1: Karantina / Kill Process -->
+                        <Button Content="🛑 Karantina Proses (Kill)" 
+                                Click="KillProcess_Click"
+                                Margin="0,0,0,6" 
+                                Padding="8,5" 
+                                Background="#C0392B" 
+                                Foreground="White" 
+                                FontWeight="Bold" 
+                                FontSize="11"
+                                BorderBrush="Transparent"
+                                Cursor="Hand">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+
+                        <!-- Aksi 2: Rollback Modifikasi Registry -->
+                        <Button Content="🔄 Rollback Registry" 
+                                Click="RollbackRegistry_Click"
+                                Margin="0,0,0,6" 
+                                Padding="8,5" 
+                                Background="#D35400" 
+                                Foreground="White" 
+                                FontWeight="Bold" 
+                                FontSize="11"
+                                BorderBrush="Transparent"
+                                Cursor="Hand">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+
+                        <!-- Aksi 3: Abaikan (Mark as Safe) -->
+                        <Button Content="✅ Tandai Aman" 
+                                Click="MarkSafe_Click"
+                                Padding="8,5" 
+                                Background="#2D2D30" 
+                                Foreground="White" 
+                                FontWeight="Bold" 
+                                FontSize="11"
+                                BorderBrush="Transparent"
+                                Cursor="Hand">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

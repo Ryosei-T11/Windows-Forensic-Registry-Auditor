@@ -93,7 +93,7 @@ namespace ForensicAuditor.Infrastructure.ETW
                     var enableKernel = typeof(TraceEventSession).GetMethod("EnableKernelProvider", new[] { typeof(ulong) });
                     if (enableKernel != null)
                     {
-                        // Kernel registry keyword value (0x100000) varies by OS; use common Registry flag from TraceEvent (0x100000)
+                        // Kernel registry keyword value (0x100000) varies by OS; use common Registry flag from TraceEvent
                         enableKernel.Invoke(_session, new object[] { (ulong)0x100000 });
                     }
                     else
